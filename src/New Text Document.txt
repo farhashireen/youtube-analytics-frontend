@@ -1,0 +1,91 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer
+} from 'recharts';
+
+const CompetitorComparison = () => {
+  const [channels, setChannels] = useState('');
+  const [comparisonData, setComparisonData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchCompetitors = async () => {
+    setLoading(true);
+    const names = channels.split(',').map(name => name.trim());
+    const results = [];
+
+    for (const name of names) {
+      try {
+        const res = await axios.get(`http://localhost:3001/channel?name=${name}`);
+        const channel = res.data.channel;
+        const videos = res.data.videos;
+
+        const avgViews = videos.reduce((sum, v) => sum + parseInt(v.statistics.viewCount || 0), 0) / videos.length;
+        const avgEngagement = videos.reduce((sum, v) => {
+          const views = parseInt(v.statistics.viewCount || 1);
+          const likes = parseInt(v.statistics.likeCount || 0);
+          const comments = parseInt(v.statistics.commentCount || 0);
+          return sum + ((likes + comments) / views) * 100;
+        }, 0) / videos.length;
+
+        results.push({
+          name: channel.snippet.title,
+          avgViews: Math.round(avgViews),
+          avgEngagement: +avgEngagement.toFixed(2),
+          subscribers: parseInt(channel.statistics.subscriberCount || 0)
+        });
+      } catch (err) {
+        console.error(`Error fetching ${name}`, err);
+      }
+    }
+
+    setComparisonData(results);
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ marginTop: '40px' }}>
+      <h3 style={{ color: '#FF0000' }}>🎯 Competitor Comparison</h3>
+      <input
+        type="text"
+        placeholder="Enter competitor channel names (comma-separated)"
+        value={channels}
+        onChange={(e) => setChannels(e.target.value)}
+        style={{ padding: '10px', width: '100%', marginBottom: '20px' }}
+      />
+      <button onClick={fetchCompetitors} style={{ padding: '10px 20px', backgroundColor: '#FF0000', color: 'white', border: 'none', borderRadius: '6px' }}>
+        Compare
+      </button>
+
+      {loading && <p>Loading...</p>}
+
+      {comparisonData.length > 0 && (
+        <div style={{ marginTop: '30px' }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={comparisonData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="avgViews" fill="#FF6666" name="Avg Views" />
+              <Bar dataKey="avgEngagement" fill="#FF0000" name="Engagement Rate (%)" />
+            </BarChart>
+          </ResponsiveContainer>
+
+          <h4 style={{ marginTop: '20px' }}>Subscribers</h4>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={comparisonData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="subscribers" fill="#999" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CompetitorComparison;

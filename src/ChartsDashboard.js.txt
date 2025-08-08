@@ -1,0 +1,115 @@
+// ChartsDashboard.js
+import React from 'react';
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer
+} from 'recharts';
+
+const ChartsDashboard = ({ videos, channelData }) => {
+  // Transform video data for charting
+  const videoStats = videos.map(video => ({
+    title: video.snippet.title.slice(0, 30) + '...',
+    views: parseInt(video.statistics.viewCount),
+    likes: parseInt(video.statistics.likeCount || 0),
+    comments: parseInt(video.statistics.commentCount || 0),
+    likeViewRatio: (
+      (parseInt(video.statistics.likeCount || 0) /
+        parseInt(video.statistics.viewCount || 1)) * 100
+    ).toFixed(2)
+  }));
+
+  return (
+    <div style={{ marginTop: '40px' }}>
+      <h3 style={{ color: '#FF0000' }}>📊 Channel Analytics</h3>
+
+      <div style={{ height: 300 }}>
+        <h4>Views Per Video</h4>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={videoStats}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="title" interval={0} angle={-10} textAnchor="end" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="views" fill="#FF0000" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{ height: 300, marginTop: 50 }}>
+        <h4>Likes Trend</h4>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={videoStats}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="title" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="likes" stroke="#00C853" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{ height: 300, marginTop: 50 }}>
+        <h4>Likes-to-Views Ratio (%)</h4>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={videoStats}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="title" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="likeViewRatio" fill="#FFD600" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{ height: 300, marginTop: 50 }}>
+        <h4>Comments Per Video</h4>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={videoStats}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="title" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="comments" fill="#2196F3" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {channelData && (
+        <div style={{ height: 300, marginTop: 50 }}>
+          <h4>📈 Channel Summary</h4>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={[
+                {
+                  metric: 'Subscribers',
+                  value: parseInt(channelData.statistics.subscriberCount),
+                },
+                {
+                  metric: 'Total Views',
+                  value: parseInt(channelData.statistics.viewCount),
+                },
+                {
+                  metric: 'Total Videos',
+                  value: parseInt(channelData.statistics.videoCount),
+                }
+              ]}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="metric" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#FF0000" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ChartsDashboard;
+
